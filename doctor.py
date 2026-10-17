@@ -568,11 +568,39 @@ def log_candidates() -> list[Path]:
     return candidates
 
 
+def ports_established() -> set[int]:
+    """返回当前处于 ESTABLISHED 状态的插件端口集合。
+
+    为什么需要：端口上真的有连接，是「插件活着、桥已连上」的**直接证据**，
+    比日志时间戳可靠得多。日志只在**有请求**时才写，所以「日志旧」完全可能
+    只是「这几天没修图」，而不是插件坏了。实测踩过：Lightroom 已运行 28 小时、
+    两个端口都 ESTABLISHED，但日志停在 37 小时前——报 FAIL 会把好环境说成坏的。
+    """
+    found: set[int] = set()
+    if os.name != "nt":
+        return found
+    ps = (
+        "Get-NetTCPConnection -State Established -ErrorAction SilentlyContinue | "
+        "Where-Object { $_.LocalPort -in 58763,58764 } | "
+        "ForEach-Object { $_.LocalPort }"
+    )
+    rc, out = timed_run(["powershell", "-NoProfile", "-NonInteractive", "-Command", ps], timeout=NETSTAT_TIMEOUT)
+    if rc == 0:
+        for line in out.splitlines():
+            token = line.strip()
+            if token.isdigit():
+                found.add(int(token))
+    return found
+
+
 def check_plugin_log() -> list[Check]:
     """检查插件日志最后写入时间。
 
-    为什么查：日志是插件「活着」的心跳。超过 24 小时没动静，
-    基本就是插件没被 Lightroom 加载（或加载后一直没被调用过）。
+    为什么查：日志能反映插件的加载历史。但**日龄不能单独用来判定插件死活** ——
+    日志只在有请求时才追加，所以「很久没更新」最常见的含义其实是「最近没修图」。
+
+    因此判定顺序是：日志新鲜 → OK；日志旧 → **再看端口有没有 ESTABLISHED 连接**，
+    有连接就说明插件活着（此时日志旧是正常的）；两者都不成立才报 FAIL。
     """
     existing = [p for p in log_candidates() if p.is_file()]
     if not existing:
@@ -597,12 +625,25 @@ def check_plugin_log() -> list[Check]:
     if age <= LOG_STALE_HOURS * 3600:
         return [Check(OK, f"插件日志新鲜（最后更新 {stamp}，{human_age(age)}）")]
 
+    # 日志旧 —— 但不能据此判死刑，先看端口上有没有活连接。
+    live = ports_established()
+    if live:
+        ports_txt = "、".join(str(p) for p in sorted(live))
+        return [
+            Check(
+                OK,
+                f"插件日志已 {human_age(age)} 没更新（最后更新 {stamp}），"
+                f"但端口 {ports_txt} 正处于 ESTABLISHED —— 插件活着，只是这段时间没有请求（属正常）",
+            )
+        ]
+
     return [
         Check(
             FAIL,
-            f"插件日志已 {human_age(age)} 没更新（最后更新 {stamp}）—— 插件可能没有被加载",
+            f"插件日志已 {human_age(age)} 没更新（最后更新 {stamp}），且端口没有连接 —— 插件没有被加载",
             "1) Lightroom → 文件 → 增效工具管理器，确认 LightroomMCP 已勾选启用；"
-            "2) 启用后必须完全退出并重启 Lightroom；"
+            "2) 启用后必须完全退出并重启 Lightroom，**重启后按 G 切到「图库」模块**"
+            "（插件只在图库模块强制初始化，见 pitfalls 坑 14）；"
             f"3) 日志文件在 {newest}，删掉它再重启 Lightroom，看是否重新生成。",
         )
     ]

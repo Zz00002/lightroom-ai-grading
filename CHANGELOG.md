@@ -9,6 +9,11 @@
 
 ## [未发布]
 
+### 修复
+
+- **`doctor.py`：插件日志「很久没更新」不再单独判为 FAIL。** 日志只在**有请求**时才追加，所以「日志旧」最常见的含义是「最近没修图」，而不是「插件坏了」。现在会先看端口有没有 ESTABLISHED 连接：有连接就判 OK 并说明原因；两者都不成立才报 FAIL。
+  > 实测踩到这个假阳性：Lightroom 已运行 28 小时、58763/58764 都处于 ESTABLISHED，但日志停在 37 小时前（那是本次 Lightroom 启动之前的最后一条）。旧逻辑会把**完全正常**的环境报成坏的——而 `doctor.py` 存在的意义恰恰是别让人误判。
+
 ### 待办 / TODO
 
 - [ ] 从 `lightroom-mcp` 上游确认 [坑 9](docs/pitfalls.md#pit-9)（`add_ai_mask` 卡死写锁）是否已修，更新 [`docs/mcp-comparison.md`](docs/mcp-comparison.md)
