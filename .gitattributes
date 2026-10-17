@@ -1,0 +1,35 @@
+# 统一换行符 —— 跨平台协作的必需品，不是洁癖
+#
+# 背景：Windows 上 git 默认把文本文件在工作区存成 CRLF。如果协作者用
+# macOS / Linux，带 CRLF 的 .py / .mjs 可能直接报 `bad interpreter`，
+# 而且每次提交都会产生整文件 diff，把真正的改动淹没掉。
+#
+# 策略：仓库里一律存 LF，工作区也检出 LF（Python / Node 在 Windows 上
+# 都能正确处理 LF）。只有 Windows 专属的脚本才用 CRLF。
+
+* text=auto eol=lf
+
+# ── 源码与文档：LF ──────────────────────────────────────────
+*.py    text eol=lf
+*.mjs   text eol=lf
+*.js    text eol=lf
+*.json  text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.md    text eol=lf
+*.lua   text eol=lf
+.gitignore    text eol=lf
+.gitattributes text eol=lf
+
+# ── Windows 专属：CRLF（PowerShell 和批处理对 LF 敏感）──────
+*.ps1   text eol=crlf
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+# ── 二进制：禁止任何转换 ────────────────────────────────────
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.CR3   binary
+*.tif   binary
+*.lrcat binary

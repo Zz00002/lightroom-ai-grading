@@ -1,0 +1,20 @@
+{
+  "name": "lightroom-ai-grading",
+  "version": "0.1.0",
+  "description": "让 AI 智能体通过 MCP 驱动 Adobe Lightroom Classic 做单张精调 —— 技能、脚本与坑位清单",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@pired/lightroom-mcp": "3.2.6"
+  },
+  "scripts": {
+    "doctor": "python doctor.py"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "comments": {
+    "dependencies": "刻意精确锁定 3.2.6 —— 那是本仓库所有结论的实测版本。升级前请先重跑 doctor.py 和 scripts/lr-test.mjs 验证，并更新 CHANGELOG。",
+    "private": "防止误发到 npm。本仓库是文档+脚本，不是一个 npm 包。"
+  }
+}

@@ -1,0 +1,81 @@
+# ══════════════════════════════════════════════════════════════
+#  照片与素材 —— 绝对不要提交
+#  里面有客户照片、家人照片、路人，一旦推上公开仓库无法撤回
+# ══════════════════════════════════════════════════════════════
+
+# RAW 原片
+*.CR3
+*.CR2
+*.CRW
+*.NEF
+*.NRW
+*.ARW
+*.SRF
+*.SR2
+*.DNG
+*.RAF
+*.ORF
+*.RW2
+*.PEF
+*.RWL
+
+# 位图成品
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+*.psd
+*.psb
+*.heic
+*.webp
+*.bmp
+*.gif
+
+# PNG 默认也挡掉，但放行文档截图
+*.png
+!docs/img/*.png
+!docs/img/**/*.png
+
+# ══════════════════════════════════════════════════════════════
+#  Lightroom 目录 —— 二进制、体积大、且无法合并协作
+# ══════════════════════════════════════════════════════════════
+*.lrcat
+*.lrcat-data
+*.lrcat.lock
+*.lrdata/
+*.lrprev/
+Lightroom Catalog Previews.lrdata/
+Lightroom Catalog Smart Previews.lrdata/
+
+# 照片旁边的 .xmp sidecar —— 挡掉，但放行我们的预设目录
+*.xmp
+!presets/**/*.xmp
+!recipes/**/*.xmp
+
+# 导出与中间产物
+_ai_out/
+_ai_tools/
+_ai_face/
+preview/
+exports/
+*.lrplugin/
+LightroomMCP.log
+*.log
+
+# ══════════════════════════════════════════════════════════════
+#  代码
+# ══════════════════════════════════════════════════════════════
+node_modules/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.npm-cache/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
