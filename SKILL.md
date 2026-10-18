@@ -1,6 +1,6 @@
 ---
 name: lightroom-ai-grading
-description: 用 AI 智能体通过 MCP 控制 Adobe Lightroom Classic 做单张精调——环境检查、建虚拟副本保护原片、看图、写入 Camera Raw 参数、用直方图量化诊断、迭代微调、直到导出成品。适用于用户给出照片文件名要求"调这张"、"调色"、"修图"、"做某个风格"的场景。包含 19 条已验证的坑位清单。
+description: 用 AI 智能体通过 MCP 控制 Adobe Lightroom Classic 做单张精调——环境检查、建虚拟副本保护原片、看图、写入 Camera Raw 参数、用直方图量化诊断、迭代微调、直到导出成品。适用于用户给出照片文件名要求"调这张"、"调色"、"修图"、"做某个风格"的场景。包含 20 条已验证的坑位清单。
 whenToUse: 用户要求用 Lightroom 调色/修图某张照片，或需要搭建/排查 Lightroom MCP 连接时
 metadata:
   verified: "Lightroom Classic 15.3 (Windows) / @pired/lightroom-mcp 3.2.6"
@@ -13,7 +13,7 @@ metadata:
 **原片永不修改**，所有效果存在虚拟副本上。
 
 > 📖 **配套文档**（本 skill 的详细版，遇到问题先查这里）
-> - [`docs/pitfalls.md`](docs/pitfalls.md) — **19 条实测坑位**。动手前至少读坑 9 / 10 / 19
+> - [`docs/pitfalls.md`](docs/pitfalls.md) — **20 条实测坑位**。动手前至少读坑 9 / 10 / 19 / 20
 > - [`docs/workflow.md`](docs/workflow.md) — 完整工作流与决策依据
 > - [`docs/setup.md`](docs/setup.md) — 安装与故障排查
 >
@@ -33,11 +33,12 @@ Get-NetTCPConnection -LocalPort 58763,58764 -State Listen |
   Select-Object LocalPort,OwningProcess
 ```
 
-端口 **58763/58764** 有 `Listen` 且 OwningProcess = Lightroom 的 PID = 桥已通。
+端口 **58763/58764** 有 `Listen`、OwningProcess = Lightroom 的 PID，**只说明插件加载了，不代表桥能应答**——桥僵死时端口照样在监听、连接照样 `ESTABLISHED`，但每条调用都报 `not answering`（[坑 20](docs/pitfalls.md#pit-20)）。真判据是插件日志里有没有你这次调用的 `Request id=` 行。
 
-**连不上先做这两件事**：
+**连不上先做这三件事**：
 1. 确认 Lightroom 停在**「图库」模块**（按 `G`）——插件只在图库模块强制初始化，见 [坑 14](docs/pitfalls.md#pit-14)
 2. 看插件日志有没有新行：`<我的文档>\LrClassicLogs\LightroomMCP.log`
+3. 报 `Connected to the Lightroom plugin's ports, but it is not answering` → **先杀桥**（[坑 20](docs/pitfalls.md#pit-20)），别急着重启 Lightroom——会丢掉正在多选的照片
 
 ---
 

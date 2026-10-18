@@ -457,7 +457,8 @@ def check_ports() -> list[Check]:
       * 超时(WSAEWOULDBLOCK) → 端口上已有连接在通信，而 Windows 对同一台机器
                                到「已建立连接」的端口发起的二次连接会直接短路，
                                于是新探测连接超时。这时端口其实是好的，不能误报成 FAIL。
-    判据是 netstat：真的看到 58763/58764 处于 ESTABLISHED 就说明桥在工作。
+    判据是 netstat：看到 58763/58764 处于 ESTABLISHED 只证明**连接存在**，
+    不证明桥会应答 —— 桥僵死时连接照样在，但每条调用都超时（见 docs/pitfalls.md 坑 20）。
     端口一旦被人占用，临时探测连接就探不进去，这是本机回环的固有行为，不是故障。
     """
     if os.name != "nt":
@@ -475,7 +476,8 @@ def check_ports() -> list[Check]:
         if rc == 0:
             checks.append(Check(OK, f"端口 {port} 可连接（{role}{who}）"))
         elif port in owners:
-            checks.append(Check(OK, f"端口 {port} 已在通信中（{role}{who}）—— 本机回环探测被短路，属正常"))
+            checks.append(Check(OK, f"端口 {port} 已在通信中（{role}{who}）—— 本机回环探测被短路，属正常；"
+                                  "但连接存在≠插件在应答（桥僵死时也长这样，见坑 20）"))
         elif rc in (10060, 10035, -1):
             checks.append(
                 Check(
